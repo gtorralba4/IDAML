@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import time
 import ultranest
 from ultranest.plot import PredictionBand
+from astropy import units as u
+from astropy.constants import c,hbar
+import uncertainties.unumpy as unumpy
 
 
 
@@ -45,6 +48,32 @@ def main():
     mean_params = np.append(mean_params,result['logz'])
     std_err = np.append(std_err,result['logzerr'])
     
+    
+    
+    tau_obs = unumpy.uarray(mean_params[0],std_err[0])
+    muon_mass = unumpy.uarray(105.6583755,0.0000023) #MeV/c^2 from https://pdglive.lbl.gov/Particle.action?node=S004&init=0
+    rho_lit = unumpy.uarray(1.266,0.001) #Measurement of the underground atmospheric muon charge ratio using the MINOS Near Detector
+    
+    c_unc = unumpy.uarray(c.value,c.uncertainty)
+    hbar_unc = unumpy.uarray(hbar.value,hbar.uncertainty)
+    hbar_GeVs = hbar.to(u.GeV * u.s).value
+    G_Fermi = unumpy.sqrt(192*np.pi**3 / ((tau_obs*1e-9)/hbar_GeVs * (muon_mass*1e-3)**5))
+    G_Fermi_SI = G_Fermi*(hbar_unc*c_unc)**3
+    print("G_F = ",G_Fermi,"GeV^-2 =", G_Fermi_SI,"Jm^3")
+    print("--"*30)
+    tau_muon = unumpy.uarray(2.19703,0.00004)*10**3 #ns
+    tau_muon_neg_medium = unumpy.uarray(2.043,0.003)*10**3 #ns
+    expected_tau = tau_muon*(1+rho_lit)/(tau_muon/tau_muon_neg_medium+rho_lit)
+    rho = -tau_muon/tau_muon_neg_medium *((tau_muon_neg_medium-tau_obs)/(tau_muon-tau_obs))
+    print("Literature rho =", rho_lit)
+    print("rho = ",rho)
+    print("--"*30)
+    print("expected tau = ", expected_tau,"ns")
+    #maximum likelihood estimation (d/dtau(lnL = 0) -> tau_mle = mean(tau))
+    print(f"Sample mean (analytical MLE): {np.mean(histogram):.1f} ns")
+    print("obtained tau = ",tau_obs,"ns")
+    
+    
     plt.figure()
     plt.rcParams["font.family"] = "Times New Roman"
     fontname={'fontname':'Times New Roman','size':14}
@@ -58,12 +87,8 @@ def main():
     bin_width = edges[1] - edges[0]
     midpoints = (edges[:-1] + edges[1:]) / 2
     
-    #maximum likelihood estimation (d/dtau(lnL = 0) -> tau_mle = mean(tau))
-    print(f"Sample mean (analytical MLE): {np.mean(histogram):.1f} ns")
     x= midpoints
     band = PredictionBand(x)    
-    
-
     for (a,) in sampler.results['samples'][:,:1]:
         y_model = len(histogram)*bin_width*1/a*np.exp(-x/a)
         band.add(y_model)
@@ -77,8 +102,6 @@ def main():
     plt.savefig(png_name)
     plt.show()
     plt.close()
-    
-    
 if __name__ == "__main__":
     start_time = time.time()
     main()
