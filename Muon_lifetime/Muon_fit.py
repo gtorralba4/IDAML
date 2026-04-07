@@ -22,7 +22,9 @@ def muondecay(parameters):
     
     #truncated exponential due to \exists t_min P(t|tau) = 1/tau*exp(-(t-tmin)/tau)
     #tmin = min(histogram)
-    logL = np.sum(np.log(1/tau) - histogram/tau)
+    #logL = np.sum(-np.log(tau) - histogram/tau)
+    t_min, t_max = histogram.min(), 40000
+    logL = np.sum(-np.log(tau) - histogram/tau) - len(histogram) * np.log(np.exp(-t_min/tau) - np.exp(-t_max/tau))
     return logL
 
 def prior(cube):
