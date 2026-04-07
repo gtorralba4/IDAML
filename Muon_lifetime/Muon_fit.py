@@ -6,6 +6,7 @@ from ultranest.plot import PredictionBand
 from astropy import units as u
 from astropy.constants import c,hbar
 import uncertainties.unumpy as unumpy
+from ultranest.plot import cornerplot
 
 
 
@@ -50,7 +51,7 @@ def main():
     mean_params = np.append(mean_params,result['logz'])
     std_err = np.append(std_err,result['logzerr'])
     
-    
+    cornerplot(result)
     
     tau_obs = unumpy.uarray(mean_params[0],std_err[0])
     muon_mass = unumpy.uarray(105.6583755,0.0000023) #MeV/c^2 from https://pdglive.lbl.gov/Particle.action?node=S004&init=0
