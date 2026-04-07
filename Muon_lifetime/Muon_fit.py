@@ -54,9 +54,11 @@ def main():
     muon_mass = unumpy.uarray(105.6583755,0.0000023) #MeV/c^2 from https://pdglive.lbl.gov/Particle.action?node=S004&init=0
     rho_lit = unumpy.uarray(1.266,0.001) #Measurement of the underground atmospheric muon charge ratio using the MINOS Near Detector
     
-    c_unc = unumpy.uarray(c.value,c.uncertainty)
+    c_unc = unumpy.uarray(c.value,0)
     hbar_unc = unumpy.uarray(hbar.value,hbar.uncertainty)
-    hbar_GeVs = hbar.to(u.GeV * u.s).value
+    hbar_GeVs_val = hbar.to(u.GeV * u.s).value
+    hbar_GeVs_unc = hbar.uncertainty / hbar.value * hbar_GeVs_val
+    hbar_GeVs = unumpy.uarray(hbar_GeVs_val,hbar_GeVs_unc)
     G_Fermi = unumpy.sqrt(192*np.pi**3 / ((tau_obs*1e-9)/hbar_GeVs * (muon_mass*1e-3)**5))
     G_Fermi_SI = G_Fermi*(hbar_unc*c_unc)**3
     print("G_F = ",G_Fermi,"GeV^-2 =", G_Fermi_SI,"Jm^3")
